@@ -4,9 +4,13 @@ module Offshore
       @app = app
     end
     
-    def init_requires
-      return if @init_requires
-      @init_requires = true
+    def init_server
+      Offshore::Database.init # has it's own singleton code
+    end
+    
+    def init_thread
+      return if @init_thread
+      @init_thread = true
       
       # TODO: move this to a config block
       if defined?(Rails)
@@ -17,30 +21,44 @@ module Offshore
         end
       end
     end
+    
+    def init
+      init_thread
+      init_server
+    end
+
 
     def call(env)
       if (env["PATH_INFO"] =~ /^\/offshore_tests\/(.*)/) == 0
-        status = 500     
-        headers = {}
-        hash = {"error" => "Unknown method: #{$1}"}
-        
-        begin
-          case $1
-          when "factory_create", "suite_start", "suite_stop", "test_start", "test_stop"
-            status, hash = send($1, env)
-          end
-        rescue StandardError => e
-          hash = {"error" => e.message}
-          raise # for now
-        end
-        
-        content = hash.to_json
-        headers['Content-Type'] = "application/json"
-        headers['Content-Length'] = content.length.to_s
-        [status, headers, [content]]
+        offshore_call($1, env)
       else
         @app.call(env)
       end
+    end
+  
+    def offshore_call(method, env)
+      status = 500     
+      headers = {}
+      hash = {"error" => "Unknown method: #{method}"}
+      
+      begin
+        case method
+        when "factory_create", "suite_start", "suite_stop", "test_start", "test_stop"
+          status, hash = send(method, env)
+        end
+      rescue CheckBackLater => e
+        hash = {"error" => e.message}
+        status = Offshore::WAIT_CODE
+      rescue StandardError => e
+        hash = {"error" => e.message}
+        status = 500
+        raise # for now
+      end
+      
+      content = hash.to_json
+      headers['Content-Type'] = "application/json"
+      headers['Content-Length'] = content.length.to_s
+      [status, headers, [content]]
     end
   
     def factory_girl
@@ -73,7 +91,7 @@ module Offshore
     end
     
     def suite_start(env)
-      init_requires  # set it up in memory
+      init  # set it up in memory if needed
       [200, {"todo" => "log that the suite is running"}]
     end
     
@@ -82,10 +100,12 @@ module Offshore
     end
     
     def test_start(env)
+      Offshore::Database.start
       [200, {"todo" => "implement reset / lock"}]
     end
     
     def test_stop(env)
+      Offshore::Database.stop
       [200, {"todo" => "implement unlock"}]
     end
     

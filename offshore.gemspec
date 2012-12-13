@@ -17,4 +17,6 @@ Gem::Specification.new do |gem|
   
   gem.add_dependency "multi_json"
   gem.add_dependency "faraday"
+  gem.add_dependency "redis"
+  gem.add_dependency "redis-namespace"
 end

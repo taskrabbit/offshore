@@ -29,7 +29,8 @@ module Offshore
       return @connection if @connection
       connection_class = Faraday.respond_to?(:new) ? ::Faraday : ::Faraday::Connection
 
-      @connection = connection_class.new(base_uri) do |builder|
+      timeout_seconds = 5*60 # 5 minutes
+      @connection = connection_class.new(base_uri, :timeout => timeout_seconds) do |builder|
         builder.use Faraday::Request::UrlEncoded  if defined?(Faraday::Request::UrlEncoded)
         builder.adapter Faraday.default_adapter
       end
@@ -37,17 +38,21 @@ module Offshore
     end
     
     def post(append_path, attributes={})
-      http_response = connection.post("#{self.path}/#{append_path}", attributes)
-      if http_response.success?
-        return MultiJson.decode(http_response.body)
-      else
-        begin
-          hash = MultiJson.decode(http_response.body)
-          message = "Error in offshore connection (#{append_path}): #{hash}"
-        rescue
-          message = "Error in offshore connection (#{append_path}): #{http_response.status}"
+      while true do
+        http_response = connection.post("#{self.path}/#{append_path}", attributes)
+        if http_response.success?
+          return MultiJson.decode(http_response.body)
+        elsif http_response.status.to_s == Offshore::WAIT_CODE.to_s
+          sleep 2 # two seconds and try again
+        else
+          begin
+            hash = MultiJson.decode(http_response.body)
+            message = "Error in offshore connection (#{append_path}): #{hash}"
+          rescue
+            message = "Error in offshore connection (#{append_path}): #{http_response.status}"
+          end
+          raise message
         end
-        raise message
       end
     end
     
@@ -67,7 +72,7 @@ module Offshore
     end
     
     def suite_stop
-      # nothing to do yet
+      hash = post(:suite_stop)
     end
     
     def test_start
