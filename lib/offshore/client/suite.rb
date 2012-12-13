@@ -26,6 +26,7 @@ module Offshore
     end
   
     def stop
+      Offshore.test # if the last one failed this will stop it
       all_hosts!(:suite_stop)
     end
   end

@@ -38,6 +38,8 @@ module Offshore
     end
     
     def post(append_path, attributes={})
+      attributes[:hostname] = `hostname`  # always send hostname
+      
       while true do
         http_response = connection.post("#{self.path}/#{append_path}", attributes)
         if http_response.success?
@@ -61,6 +63,13 @@ module Offshore
       @host = options[:host]
       @port = options[:port]
       @path = options[:path]
+      @snapshot = options[:snapshot]
+    end
+    
+    def snapshot_name
+      return nil if @snapshot == true
+      return "none" if @snapshot == false
+      @snapshot
     end
     
     def path
@@ -68,19 +77,21 @@ module Offshore
     end
     
     def suite_start
-      hash = post(:suite_start)
+      attributes = {}
+      attributes[:snapshot] = snapshot_name
+      hash = post(:suite_start, attributes)
     end
     
     def suite_stop
       hash = post(:suite_stop)
     end
     
-    def test_start
-      hash = post(:test_start)
+    def test_start(name)
+      hash = post(:test_start, { :name => name })
     end
     
-    def test_stop
-      hash = post(:test_stop)
+    def test_stop(name)
+      hash = post(:test_stop, { :name => name })
     end
     
     def factory_create(name, attributes={})

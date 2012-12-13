@@ -19,4 +19,5 @@ Gem::Specification.new do |gem|
   gem.add_dependency "faraday"
   gem.add_dependency "redis"
   gem.add_dependency "redis-namespace"
+  gem.add_dependency "mysql2"
 end

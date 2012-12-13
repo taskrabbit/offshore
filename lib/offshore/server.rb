@@ -1,7 +1,10 @@
 require "redis"
 require "offshore/server/errors"
+require "offshore/server/logger"
 require "offshore/server/redis"
 require "offshore/server/mutex"
+require "offshore/server/snapshot"
 require "offshore/server/database"
+require "offshore/server/controller"
 require "offshore/server/middleware"
 require "offshore/server/railtie" if defined?(Rails)

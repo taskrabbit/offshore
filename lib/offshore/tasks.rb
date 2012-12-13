@@ -6,6 +6,14 @@ namespace :offshore do
     require "offshore"
   end
   
+  task :schema_snapshot => [:preload, :setup] do
+    Offshore::Database.schema_snapshot
+  end
+  
+  task :schema_rollback => [:preload, :setup] do
+    Offshore::Database.snapshoter.rollback
+  end
+  
   task :unlock => [:preload, :setup] do
     Offshore::Database.unlock
   end
@@ -18,6 +26,10 @@ namespace :offshore do
     Offshore::Database.startup(false)
   end
   
-  desc "Setup will configure a resque task to run before resque:work"
-  task :seed_and_unlock => [ :preload, :setup, :seed, :unlock ]
+  task :reset => [:preload, :setup] do
+    Offshore::Database.reset
+  end
+  
+  task :seed_schema => [ :preload, :setup, :seed, :schema_snapshot ]
+  
 end

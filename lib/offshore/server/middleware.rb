@@ -41,10 +41,14 @@ module Offshore
       headers = {}
       hash = {"error" => "Unknown method: #{method}"}
       
+      Logger.info("Offshore Tests Action: #{method}")
+      
       begin
         case method
         when "factory_create", "suite_start", "suite_stop", "test_start", "test_stop"
-          status, hash = send(method, env)
+          init if method == "suite_start"
+          controller = Controller.new(Rack::Request.new(env).params)
+          status, hash = controller.send(method)
         end
       rescue CheckBackLater => e
         hash = {"error" => e.message}
@@ -58,56 +62,9 @@ module Offshore
       content = hash.to_json
       headers['Content-Type'] = "application/json"
       headers['Content-Length'] = content.length.to_s
-      [status, headers, [content]]
+      out = [status, headers, [content]]
+      Logger.info("Offshore Tests #{method}... returns: #{out.to_s}")
+      out
     end
-  
-    def factory_girl
-      if defined? FactoryGirl
-        return FactoryGirl
-      elsif defined? Factory
-        return Factory
-      end
-      return nil
-    end
-  
-    def factory_create(env)
-      hash = Rack::Request.new(env).params
-      name = hash["name"]
-      attributes = hash["attributes"] || {}
-      
-      clazz = factory_girl
-      require "factory_girl" unless clazz
-      clazz = factory_girl
-      
-      begin
-        val = clazz.create(name, attributes)
-        out = {:class_name => val.class.name, :id => val.id, :attributes => val.attributes}
-        status = 200
-      rescue ActiveRecord::RecordInvalid => invalid
-        out = {:error => invalid.record.errors.full_messages.join(",") }
-        status = 422
-      end
-      [status, out]
-    end
-    
-    def suite_start(env)
-      init  # set it up in memory if needed
-      [200, {"todo" => "log that the suite is running"}]
-    end
-    
-    def suite_stop(env)
-      [200, {"truth" => "nothing to see here."}]
-    end
-    
-    def test_start(env)
-      Offshore::Database.start
-      [200, {"todo" => "implement reset / lock"}]
-    end
-    
-    def test_stop(env)
-      Offshore::Database.stop
-      [200, {"todo" => "implement unlock"}]
-    end
-    
   end
 end

@@ -5,6 +5,10 @@ Let's say you love testing, but your app heavily depends on another app and it's
 
 Offshore allows you use the factories of that app within your test suite as well as adds transactional support to the database of that app so that each test starts with the same fixtures.
 
+#### Notes
+
+* For now, this only works on MySQL databases
+* Redis is needed to run as well
 
 ## Server
 
@@ -14,20 +18,40 @@ For Rails, add this to your Gemfile:
     group :test do
       gem 'offshore'
     end
+    
+You might need something like this to your test.rb application config:
+
+    Offshore.redis = "localhost:6379"
 
 Then run something like this on the command line
 
     rails s thin -e test -p 4111
 
-You need to include an SQL file to load in with in this app
+In you want it anything but blank, you must create a rake task called offshore:seed that creates the test database referenced in the database.yml file in the test environment.
+Something like this would work.
 
+    namespace :offshore do
+      task :preload do
+        ENV['RAILS_ENV'] = "test"
+      end
+      task :setup => :environment
+  
+      desc "seeds the db for offshore gem"
+      task :seed do
+        Rake::Task['db:migrate'].invoke
+        Rake::Task['db:test:prepare'].invoke
+        Rake::Task['db:seed'].invoke
+      end
+    end
+
+The :preload and :setup steps will be invoked in that order before your :seed call. They are actually unnecessary here, but shown in case you have something more complex to do.
 
 #### Notes
 
 * For other Rack apps, you should be able to use Offshore::Middleware directly.
 * This middleware is included automatically in Rails via Railties.
-* The server is meant to be a singular resource accessed by many test threads (parallelization of tests). It accomplishes this through a mutex and queueing.
-* Redis is required on this app.
+* The server is meant to be a singular resource accessed by many test threads (parallelization of tests). It accomplishes this through a mutex and polling its availability.
+
 
 
 ## Client
@@ -47,11 +71,11 @@ The Rspec config looks likes this:
     end
 
     config.before(:each) do
-      Offshore.test.start
+      Offshore.test.start(example)
     end
 
     config.after(:each) do
-      Offshore.test.stop
+      Offshore.test.stop(example)
     end
 
     config.after(:suite) do
@@ -66,18 +90,22 @@ Then in your test you can do:
 
 This assumes that you have a class by the same name the the :user factory made from the server that responds to find() with the id created on the server.
 
+You can send :snapshot => false to Offshore.suite.start to prevent rolling back before the test. 
+Note, this will leave your suite in a somewhat unpredictable state especially when you consider there are other suites that might be rolling that database back. 
+However, this may be preferable if your database is very large. On small (50 tables / 1000 rows) databases, the difference in time seems to be noise. Some efforts are taken (checksum) to not rollback if the test did not change the database.
+
 
 #### Notes
 
 * You can also make API requests.
-* You get a fresh database each time.
-
+* You get a fresh database each time by default.
 
 ## TODO
 
-* Reset the db on each test run
-* Locking mechanism to provide mutex access to resource
+* Use binlogs if enabled for even faster MySQL rollback
 * Configure custom lookups for the hash returned with the created data
 * Configure custom paths (defaults to /offshore_tests now)
 * Anything else need to be cleared out each test? i.e. redis, memcache, etc
+* Other DB support
+* Other MySQL adapter support
 
