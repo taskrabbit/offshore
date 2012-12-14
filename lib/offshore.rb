@@ -10,18 +10,7 @@ module Offshore
   end
   
   def test
-    if @test && @test.run?
-      # run again because it crashed in execution
-      @test.failed
-    end
-    @test ||= Test.new
-  end
-  
-  protected
-    
-  def internal_test_ended
-    # called from test.failed and test.stop
-    @test = nil
+    Offshore::Test
   end
 end
 
