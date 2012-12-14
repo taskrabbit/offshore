@@ -75,7 +75,7 @@ The Rspec config looks likes this:
     end
 
     config.after(:each) do
-      Offshore.test.stop(example)
+      Offshore.test.stop
     end
 
     config.after(:suite) do
