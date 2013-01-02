@@ -14,6 +14,7 @@ namespace :offshore do
     Offshore::Database.snapshoter.rollback
   end
   
+  desc "Unlock the database"
   task :unlock => [:preload, :setup] do
     Offshore::Database.unlock
   end
@@ -26,10 +27,12 @@ namespace :offshore do
     Offshore::Database.startup(false)
   end
   
+  desc "Reset the db"
   task :reset => [:preload, :setup] do
     Offshore::Database.reset
   end
   
+  desc "seed the databse if needed"
   task :seed_schema => [ :preload, :setup, :seed, :schema_snapshot ]
   
 end
