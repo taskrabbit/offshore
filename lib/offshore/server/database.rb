@@ -50,6 +50,9 @@ module Offshore
       # should it be per test
       # what about db reconnections?
       Logger.info(" Database.init")
+      
+      Offshore::Database.unlock unless ENV['MULTI_OFFSHORE']  # no reason to keep everyone waiting if I'm the only one
+      
       if redis.get(SHUTDOWN_KEY)
         Logger.info("   .... databse shutting down. Exiting.")
         raise "Database shutting down. No new connections, please."
