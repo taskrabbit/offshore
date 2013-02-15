@@ -52,9 +52,9 @@ module Offshore
         else
           begin
             hash = MultiJson.decode(http_response.body)
-            message = "Error in offshore connection (#{append_path}): #{hash}"
+            message = "Error in offshore connection (#{append_path}): #{http_response.status},\n#{hash}"
           rescue
-            message = "Error in offshore connection (#{append_path}): #{http_response.status}"
+            message = "Error in offshore connection (#{append_path}): #{http_response.status}\n#{hash}"
           end
           raise message
         end
