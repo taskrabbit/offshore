@@ -29,14 +29,14 @@ module Offshore
 
 
     def call(env)
-      if offshore_request?
+      if offshore_request?(env)
         offshore_call($1, env)
       else
         @app.call(env)
       end
     end
 
-    def offshore_request?
+    def offshore_request?(env)
       return false unless ENV['OFFSHORE'].to_s == 'true'
       (env["PATH_INFO"] =~ /^\/offshore_tests\/(.*)/) == 0
     end
