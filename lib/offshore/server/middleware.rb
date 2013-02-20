@@ -40,11 +40,10 @@ module Offshore
     def offshore_call(env)
       status = 500     
       headers = {}
+      method = offshore_method(env)
       hash = {"error" => "Unknown method: #{method}"}
       
       Logger.info("Offshore Tests Action: #{method}")
-      
-      method = offshore_method(env)
 
       begin
         case method
