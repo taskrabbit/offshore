@@ -11,6 +11,15 @@ module Offshore
     def init_thread
       return if @init_thread
       @init_thread = true
+
+      # TODO: move this to a config block
+      if defined?(Rails)
+        begin
+          require Rails.root.join("spec","spec_helper")
+        rescue
+          raise
+        end
+      end
     end
     
     def init
