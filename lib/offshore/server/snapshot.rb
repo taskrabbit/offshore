@@ -12,7 +12,7 @@ module Offshore
       raise "Only supported in Rails for now" unless defined?(Rails)
       
       yml = Rails.root.join("config", "database.yml")
-      hash = YAML.load(ERB.new(File.read(yml)).result)["test"]
+      hash = YAML.load(ERB.new(File.read(yml)).result)['test']
 
       @config = {}
       ['username', 'password', 'host', 'port', 'database', 'collation', 'charset'].each do |key|

@@ -12,6 +12,18 @@ module Offshore
   def test
     Offshore::Test
   end
+
+  def enable!
+    @enabled = true
+  end
+
+  def enabled?
+    !!@enabled
+  end
+
+  def disable!
+    @enabled = false
+  end
 end
 
 require "offshore/client"

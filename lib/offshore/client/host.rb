@@ -21,8 +21,8 @@ module Offshore
     def base_uri
       with_http = host
       with_http = "http://#{host}" unless (host =~ /^https?:/) == 0
-      need_port = port || 80
-      "#{with_http}:#{need_port}"
+      with_http << ":#{port}" if port
+      "#{with_http}"
     end
   
     def connection
@@ -30,7 +30,10 @@ module Offshore
       connection_class = Faraday.respond_to?(:new) ? ::Faraday : ::Faraday::Connection
 
       timeout_seconds = 5*60 # 5 minutes
-      @connection = connection_class.new(base_uri, :timeout => timeout_seconds) do |builder|
+      options = {:timeout => timeout_seconds}
+      options[:ssl] = {:verify => false}
+
+      @connection = connection_class.new(base_uri, options) do |builder|
         builder.use Faraday::Request::UrlEncoded  if defined?(Faraday::Request::UrlEncoded)
         builder.adapter Faraday.default_adapter
       end
@@ -49,9 +52,9 @@ module Offshore
         else
           begin
             hash = MultiJson.decode(http_response.body)
-            message = "Error in offshore connection (#{append_path}): #{hash}"
+            message = "Error in offshore connection (#{append_path}): #{http_response.status},\n#{hash}"
           rescue
-            message = "Error in offshore connection (#{append_path}): #{http_response.status}"
+            message = "Error in offshore connection (#{append_path}): #{http_response.status}\n#{hash}"
           end
           raise message
         end

@@ -5,13 +5,13 @@ module Offshore
     end
     
     def init_server
-      Offshore::Database.init # has it's own singleton code
+      Offshore::Database.init # has its own singleton code
     end
     
     def init_thread
       return if @init_thread
       @init_thread = true
-      
+
       # TODO: move this to a config block
       if defined?(Rails)
         begin
@@ -29,20 +29,31 @@ module Offshore
 
 
     def call(env)
-      if (env["PATH_INFO"] =~ /^\/offshore_tests\/(.*)/) == 0
-        offshore_call($1, env)
+      if offshore_request?(env)
+        offshore_call(env)
       else
         @app.call(env)
       end
     end
+
+    def offshore_request?(env)
+      return false unless Offshore.enabled?
+      !!offshore_method(env)
+    end
+
+    def offshore_method(env)
+      env["PATH_INFO"] =~ /^\/offshore_tests\/(.*)/
+      $1
+    end
   
-    def offshore_call(method, env)
+    def offshore_call(env)
       status = 500     
       headers = {}
+      method = offshore_method(env)
       hash = {"error" => "Unknown method: #{method}"}
       
       Logger.info("Offshore Tests Action: #{method}")
-      
+
       begin
         case method
         when "factory_create", "suite_start", "suite_stop", "test_start", "test_stop"
