@@ -8,25 +8,9 @@ module Offshore
       Offshore::Database.init # has its own singleton code
     end
     
-    def init_thread
-      return if @init_thread
-      @init_thread = true
-
-      # TODO: move this to a config block
-      if defined?(Rails)
-        begin
-          require Rails.root.join("spec","spec_helper")
-        rescue
-          raise
-        end
-      end
-    end
-    
     def init
-      init_thread
       init_server
     end
-
 
     def call(env)
       if offshore_request?(env)

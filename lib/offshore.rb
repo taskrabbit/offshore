@@ -15,6 +15,10 @@ module Offshore
 
   def enable!
     @enabled = true
+    if defined?(Rails)
+      file = Rails.root.join("config", "environments", "offshore.rb")
+      require file if File.exists?(file)
+    end
   end
 
   def enabled?
