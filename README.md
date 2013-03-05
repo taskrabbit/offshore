@@ -25,7 +25,7 @@ You might need something like this to your test.rb application config:
 
 Then run something like this on the command line
 
-    rails s thin -e test -p 4111
+    OFFSHORE=true rails s thin -e test -p 6001
 
 In you want it anything but blank, you must create a rake task called offshore:seed that creates the test database referenced in the database.yml file in the test environment.
 Something like this would work.
