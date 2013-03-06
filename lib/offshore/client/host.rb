@@ -104,10 +104,18 @@ module Offshore
       factory_object(hash)
     end
     
+    def factory_create_id(name, attributes={})
+      data = { :name => name }
+      data[:attributes] = attributes
+      hash = post(:factory_create, data)
+      hash["id"].to_i
+    end
+    
     # TODO: move this to a config block
     def factory_object(hash)
       hash["class_name"].constantize.find(hash["id"])
     end
+    
     
   end
 end
