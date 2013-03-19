@@ -51,8 +51,8 @@ The :preload and :setup steps will be invoked in that order before your :seed ca
 * For other Rack apps, you should be able to use Offshore::Middleware directly.
 * This middleware is included automatically in Rails via Railties.
 * The server is meant to be a singular resource accessed by many test threads (parallelization of tests). It accomplishes this through a mutex and polling its availability.
-
-
+* You'll want to run `rake offshore:startup` on the server beforehand to call your rake code and set up the databases
+* Running the server will look something like `RAILS_ENV=test OFFSHORE=true rails s -p 6001` depending on the server configuration (app decided to only enable with the env for example)
 
 ## Client
 
@@ -94,16 +94,17 @@ You can send :snapshot => false to Offshore.suite.start to prevent rolling back 
 Note, this will leave your suite in a somewhat unpredictable state especially when you consider there are other suites that might be rolling that database back. 
 However, this may be preferable if your database is very large. On small (50 tables / 1000 rows) databases, the difference in time seems to be noise. Some efforts are taken (checksum) to not rollback if the test did not change the database.
 
-
 #### Notes
 
 * You can also make API requests.
 * You get a fresh database each time by default.
+* You'll want to run `rake offshore:startup` on the server beforehand to set up the databases
 
 ## TODO
 
 * Use binlogs if enabled for even faster MySQL rollback
 * Configure custom lookups for the hash returned with the created data
+* Register with keys that maps to databases to support parallel tests
 * Configure custom paths (defaults to /offshore_tests now)
 * Anything else need to be cleared out each test? i.e. redis, memcache, etc
 * Other DB support

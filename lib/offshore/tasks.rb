@@ -23,8 +23,8 @@ namespace :offshore do
     Offshore::Database.shutdown
   end
   
-  task :startup => [:preload, :setup] do
-    Offshore::Database.startup(false)
+  task :startup => [:preload, :setup, :seed_schema] do
+    Offshore::Database.startup
   end
   
   desc "Reset the db"
