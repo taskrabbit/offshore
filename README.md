@@ -12,39 +12,54 @@ Offshore allows you use the factories of that app within your test suite as well
 
 ## Server
 
-The server app is the one with the factories and the database that your app needs to work.
-For Rails, add this to your Gemfile:
+The server app is the one with the factories and the database that your app needs to work. For Rails, add this to your Gemfile:
 
-    group :test do
-      gem 'offshore'
-    end
-    
+```ruby
+group :test do
+  gem 'offshore'
+end
+```
+
+We also add the rake tasks to your Rakefile
+
+```ruby
+begin
+  require 'offshore/tasks' if defined?(Offshore)
+rescue
+  
+end
+```
 You might need something like this to your test.rb application config:
 
-    Offshore.redis = "localhost:6379"
+```ruby
+Offshore.redis = "localhost:6379"
+Offshore.enable! if ENV['OFFSHORE'] == 'true'
+```
 
 Then run something like this on the command line
 
-    OFFSHORE=true rails s thin -e test -p 6001
+  $ OFFSHORE=true rails s thin -e test -p 6001
 
-In you want it anything but blank, you must create a rake task called offshore:seed that creates the test database referenced in the database.yml file in the test environment.
+In you want it anything but a blank database, you must create a rake task called offshore:seed that creates the test database referenced in the database.yml file in the test environment.
 Something like this would work.
 
-    namespace :offshore do
-      task :preload do
-        ENV['RAILS_ENV'] = "test"
-      end
-      task :setup => :environment
-  
-      desc "seeds the db for offshore gem"
-      task :seed do
-        Rake::Task['db:migrate'].invoke
-        Rake::Task['db:test:prepare'].invoke
-        Rake::Task['db:seed'].invoke
-      end
-    end
+```ruby
+namespace :offshore do
+  task :preload do
+    ENV['RAILS_ENV'] = "test"
+  end
+  task :setup => :environment
 
-The :preload and :setup steps will be invoked in that order before your :seed call. They are actually unnecessary here, but shown in case you have something more complex to do.
+  desc "seeds the db for offshore gem"
+  task :seed do
+    Rake::Task['db:migrate'].invoke
+    Rake::Task['db:test:prepare'].invoke
+    Rake::Task['db:seed'].invoke
+  end
+end
+```
+
+The `:preload` and `:setup` steps will be invoked in that order before your `:seed` call. They are actually unnecessary here, but shown in case you have something more complex to do.
 
 #### Notes
 
@@ -60,27 +75,33 @@ The client app is the one running the tests.
 
 The same thing in the Gemfile:
 
-    group :test do
-      gem 'offshore'
-    end
-    
+```ruby
+group :test do
+  gem 'offshore'
+end
+```
+
 The Rspec config looks likes this:
 
-    config.before(:suite) do
-      Offshore.suite.start(:host => "localhost", :port => 4111)
-    end
+```ruby
+config.before(:suite) do
+  Offshore.suite.start(:host => "localhost", :port => 4111)
+end
 
-    config.before(:each) do
-      Offshore.test.start(example)
-    end
+config.before(:each) do
+  Offshore.test.start(example)
+end
 
-    config.after(:each) do
-      Offshore.test.stop
-    end
+config.after(:each) do
+  Offshore.test.stop
+end
 
-    config.after(:suite) do
-      Offshore.suite.stop
-    end
+config.after(:suite) do
+  Offshore.suite.stop
+end
+```
+
+You could also do this based on tags if you didn't need this behavior in all your tests.
 
 Then in your test you can do:
 
@@ -102,6 +123,7 @@ However, this may be preferable if your database is very large. On small (50 tab
 
 ## TODO
 
+* Enable multiple threads/databases(just one test at a time now)
 * Use binlogs if enabled for even faster MySQL rollback
 * Configure custom lookups for the hash returned with the created data
 * Register with keys that maps to databases to support parallel tests
